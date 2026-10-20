@@ -1,0 +1,9 @@
+{
+  "name": "DuoBloom — Better Together",
+  "short_name": "DuoBloom",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f7fc",
+  "theme_color": "#19172b",
+  "description": "A playful wellness tracker for two."
+}
