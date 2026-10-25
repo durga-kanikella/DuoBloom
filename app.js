@@ -31,7 +31,7 @@ if(!state._emptyByChoice && !Object.keys(state.entries?.her||{}).length && !Obje
  state.pets ||= {her:{coins:0,owned:[],equipped:[]},him:{coins:0,owned:[],equipped:[]}};
 }
 state.pets ||= {her:{breedMonth:"",coins:0,owned:[],equipped:[]},him:{breedMonth:"",coins:0,owned:[],equipped:[]}};
-const save=()=>{localStorage.setItem("newme_data",JSON.stringify(state));renderDashboard();renderProfiles();renderRecent();if(document.getElementById("petSplit"))renderPets();};
+const save=()=>{localStorage.setItem("newme_data",JSON.stringify(state));renderDashboard();renderProfiles();renderRecent();if(document.getElementById("petSplit"))renderPets();if(window.renderAwards)window.renderAwards();};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const settings=()=>state.settings, name=p=>settings().names[p], entry=(p,d)=>state.entries[p][d];
 function maxXP(){let x=settings().xp;return Object.keys(x).reduce((a,k)=>a+Number(x[k]||0)*(k==="food"?3:1),0)}
@@ -89,8 +89,7 @@ function buildPetColumns(){
   else if(act==="buy")buyPetItem(p,id);
   else if(act==="equip")toggleEquip(p,id,v)});
 }
-function renderPets(){return; // old puppy renderer disabled; see gym.js
-
+function renderPets(){
  if(!$("petSplit"))return;buildPetColumns();const breed=currentBreed();
  $("petMonth").innerHTML=`<div><span class="eyebrow">THIS MONTH'S UNLOCK</span><h2>${breed.name} is here! ${breed.emoji}</h2><p>${breed.vibe}. A new breed unlocks automatically each calendar month.</p></div><div class="breed">${breed.emoji}</div>`;
  for(const p of ["her","him"])renderPetCol(p,breed);
@@ -303,6 +302,8 @@ function persistSettingsDraft(){
   s.punishments=$("punishments").value.split("\n").map(v=>v.trim()).filter(Boolean);
   s.habits={her:$("herHabits").value.split(",").map(v=>v.trim()).filter(Boolean),him:$("himHabits").value.split(",").map(v=>v.trim()).filter(Boolean)};
   localStorage.setItem("newme_data",JSON.stringify(state));
+  document.querySelectorAll("[data-profile-name]").forEach(el=>{el.textContent=s.names[el.dataset.profileName]||el.dataset.profileName});
+  if(window.renderDashboard)window.renderDashboard();if(window.renderAwards)window.renderAwards();if(typeof renderRecent==="function")renderRecent();if(typeof renderInsights==="function")renderInsights();
   const status=$("settingsSaveStatus");if(status)status.textContent="Changes saved automatically on this device";
   const preview=$("thresholdPreview");if(preview)preview.textContent=`Maximum possible XP: ${maxXP()} · Deduction: ${s.deduction} · Passing threshold: ${threshold()} XP (exactly ${threshold()} passes).`;
  } catch(err) { console.error("Could not persist settings draft:",err); }
@@ -333,7 +334,7 @@ function downloadFile(filename, content, type){
  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
 function fullBackup(){
- const payload={app:"NEW ME",formatVersion:1,exportedAt:new Date().toISOString(),settings:state.settings,entries:state.entries,pets:state.pets};
+ const payload={app:"NEW ME",formatVersion:2,exportedAt:new Date().toISOString(),settings:state.settings,entries:state.entries,pets:state.pets,awards:state.awards||{her:[],him:[]}};
  downloadFile(`NEW_ME_backup_${today()}.json`,JSON.stringify(payload,null,2),"application/json");
  $("backupStatus").textContent="Full backup downloaded ✓";
 }
@@ -392,6 +393,7 @@ $("importBackupFile")?.addEventListener("change",async ev=>{
    state.settings={...structuredClone(defaults),...candidate.settings,xp:{...defaults.xp,...(candidate.settings.xp||{})}};
    state.entries={her:candidate.entries.her||{},him:candidate.entries.him||{}};
    state.pets=candidate.pets||{her:{coins:0,owned:[],equipped:[]},him:{coins:0,owned:[],equipped:[]}};
+   state.awards=candidate.awards||{her:[],him:[]};
    localStorage.setItem("newme_data",JSON.stringify(state));
    renderSettings();$("checkDate").value=today();loadDraft();save();setupPetMonths();renderPets();report();
    $("backupStatus").textContent="Full backup restored successfully ✓";

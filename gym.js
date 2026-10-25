@@ -20,32 +20,19 @@ shopItems.length=0;shopItems.push(...ITEMS); // app.js wallet maths reads shopIt
 const TABS=[["eq","🏋️","Equipment"],["dec","🪴","Decorations"],["out","🧍","My avatar"],["acc","💍","Accessories"],["thm","🏠","Themes"]];
 const tab={her:"eq",him:"eq"},byId=id=>ITEMS.find(i=>i.id===id),pick=(p,c)=>ITEMS.filter(i=>i.category===c&&i.who[0]===p);
 const has=(d,id)=>d.owned.some(o=>o.id===id),on=(d,id)=>d.equipped.some(o=>o.id===id);
-function init(p){const d=petData(p);if(d.gym===3)return d;d.gym=3;d.owned=[];d.equipped=[];
- ITEMS.filter(i=>i.price===0&&i.who[0]===p).forEach(i=>{d.owned.push({id:i.id,variant:""});});
+function init(p){const d=petData(p);if(d.gym===2)return d;d.gym=2;d.owned=[];d.equipped=[];
+ ITEMS.filter(i=>i.price===0&&i.who[0]===p).forEach(i=>{d.owned.push({id:i.id,variant:""});if(i.category==="eq")d.equipped.push({id:i.id,variant:""})});
  d.outfit=pick(p,"out")[0].id;d.theme=pick(p,"thm")[0].id;return d}
 const ph=(i,badge)=>`<div class="gym-ph"><img src="${i.img}" alt="${i.name}" loading="lazy">${badge||""}</div>`;
-const COL={"her-pink":["#fde4ef","#f1bdd3","#ff7ab8"],"her-neutral":["#eee7df","#d8cbbb","#d9c3a5"],"her-dark":["#2f2a3b","#1b1824","#a78bfa"],"her-nature":["#dcebd8","#b3cba9","#6fbf73"],"her-sky":["#d9ecfb","#b0cfe9","#4aa3e8"],
- "him-dark":["#232a48","#121729","#9b7bff"],"him-neutral":["#e8e3dc","#cdc4b8","#b9a58f"],"him-industrial":["#3d3d44","#202024","#f59e0b"],"him-nature":["#2f4a3a","#1c2d24","#6fbf73"],"him-blue":["#1d3b6e","#102446","#38bdf8"],"him-sunset":["#6a3050","#2b1430","#fb923c"]};
-const EQS=[[3,30,32],[65,30,32],[68,14,28],[2,14,28],[36,40,20],[72,44,20],[8,46,18],[40,14,16],[22,22,20],[52,26,18]],
- WALLS=[[5,6,19],[76,6,19],[27,4,17],[57,4,17],[3,34,16],[80,34,16],[43,2,14]],FLOORS=[[0,18,14],[86,16,13],[24,14,9],[74,14,9]];
-let lastPlaced="";
-function sceneHTML(p,d){
- const th=byId(d.theme),c=COL[th.id.replace(/-(thm)-/,"-")]||COL[p+"-"+th.id.split("-")[2]],on_=ITEMS.filter(i=>i.who[0]===p&&on(d,i.id)),key=i=>i.id.split("-")[2];
- const put=(i,sl,fr)=>{const[l,b,w]=sl,front=!fr&&b<20&&b>=14;return `<div class="gi ${fr===1?"frame":""} ${i.id===lastPlaced?"pop":""}" title="${i.name}" style="left:${l}%;${fr?`top:${b}%`:`bottom:${b}%`};width:${w}%;z-index:${front?60:2}"><img src="${D}${p}/${fr===1?"":"c-"}${key(i)}.${fr===1?"jpg":"png"}" alt="${i.name}"></div>`};
- let eq=0,wl=0,fl=0,out="";const WALLK=["neon","poster","led","mirror","shelfplant"];
- for(const i of on_){const k=key(i);
-  if(i.category==="eq")out+=put(i,EQS[eq++%EQS.length]);
-  else if(i.category==="dec"){if(k==="rug")out+=`<div class="gi ${i.id===lastPlaced?"pop":""}" style="left:28%;bottom:13%;width:44%;z-index:1"><img src="${D}${p}/c-rug.png" alt="Rug"></div>`;
-   else if(k==="wallshelf")out+=put(i,WALLS[wl++%WALLS.length],2);
-   else if(WALLK.includes(k))out+=put(i,WALLS[wl++%WALLS.length],1);else out+=put(i,FLOORS[fl++%FLOORS.length])}}
- return `<div class="gym-room" style="--wall:${c[0]};--floor:${c[1]};--glow:${c[2]}">${out}<img class="gym-me" src="${D}${p}/c-avatar.png" alt="${esc(name(p))}">${on_.length?"":'<div class="gym-empty">Your room is empty.<br>Buy equipment and decor to fill it.</div>'}</div>`}
 function heroHTML(p,d){
- const tabName=(TABS.find(t=>t[0]===tab[p])||[])[2],wear=[byId(d.outfit),...ITEMS.filter(i=>i.category==="acc"&&i.who[0]===p&&on(d,i.id))];
- return `<div class="gym-hero">${sceneHTML(p,d)}
+ const th=byId(d.theme),tabName=(TABS.find(t=>t[0]===tab[p])||[])[2];
+ const mine=ITEMS.filter(i=>["eq","dec"].includes(i.category)&&i.who[0]===p&&on(d,i.id)),wear=[byId(d.outfit),...ITEMS.filter(i=>i.category==="acc"&&i.who[0]===p&&on(d,i.id))];
+ return `<div class="gym-hero" style="--glow:${th.tint||"transparent"}"><img src="${D}${p}/hero.jpg" alt="${esc(name(p))}'s gym room">${th.tint?'<div class="gym-tint"></div>':""}
  <div class="gym-top"><h2>${p==="her"?"My":"His"} Gym Room</h2><span class="gym-xp">⭐ ${petWallet(p)} XP</span></div>
  <div class="gym-nav">${TABS.map(([k,ic,l])=>`<button class="${tab[p]===k?"on":""}" data-tab="${k}" data-p="${p}"><span>${ic}</span>${k==="acc"&&p==="her"?"Jewellery":l}</button>`).join("")}</div></div>
+ <div class="gym-strip"><b>In your room</b>${mine.map(i=>`<img src="${i.img}" alt="${i.name}" title="${i.name}">`).join("")||"Nothing placed yet"}</div>
  <div class="gym-strip"><b>Wearing</b>${wear.map(i=>`<img src="${i.img}" alt="${i.name}" title="${i.name}">`).join("")}</div>
- <div class="gym-h"><h3>${p==="her"&&tab[p]==="acc"?"Jewellery & accessories":tabName}</h3><small>Buy, then tap Place to add it to your room</small></div>`}
+ <div class="gym-h"><h3>${p==="her"&&tab[p]==="acc"?"Jewellery & accessories":tabName}</h3><small>Spend XP to unlock · tap Place to add to your room</small></div>`}
 function card(p,d,i){
  const k=i.category,own=has(d,i.id),w=petWallet(p),act=k==="out"?d.outfit===i.id:k==="thm"?d.theme===i.id:on(d,i.id),can=w>=i.price;
  const lbl=k==="out"?(act?"Wearing":"Wear"):k==="thm"?(act?"Active":"Apply"):(k==="acc"?(act?"Take off":"Wear"):(act?"Remove":"Place"));
@@ -64,7 +51,7 @@ $("petSplit")?.addEventListener("click",e=>{
  const id=b.dataset.buy||b.dataset.use,it=byId(id);if(!it)return;
  if(b.dataset.buy){if(petWallet(p)<it.price){toast("Not enough XP yet");return}d.owned.push({id,variant:""});toast(`${it.name} unlocked!`)}
  if(it.category==="out")d.outfit=id;else if(it.category==="thm")d.theme=id;
- else{const was=on(d,id);d.equipped=d.equipped.filter(o=>o.id!==id);if(!was||b.dataset.buy){d.equipped.push({id,variant:""});lastPlaced=id}}
+ else{const was=on(d,id);d.equipped=d.equipped.filter(o=>o.id!==id);if(!was||b.dataset.buy)d.equipped.push({id,variant:""})}
  save()});
 renderPets(); // replace the puppy columns the old code drew before this file loaded
 })();

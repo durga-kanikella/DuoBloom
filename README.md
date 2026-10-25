@@ -57,17 +57,37 @@ This is a browser-local prototype using localStorage. It does **not** yet sync b
 - Food choices: each of sugar / maida / junk earns its own XP (Settings: XP per food choice).
 - Reports tab removed. Insights show Her and Him side by side in medium-size charts.
 
-## v7d update — Gym Room replaces the Pet House
-- The 🐶 Pet House tab is now 🏋️ **Gym Room**. Her and Him each get their own room, XP wallet and shop (`gym.js`).
+## v7d update — Awards Room replaces the Pet House
+- The 🐶 Pet House tab is now 🏋️ **Awards Room**. Her and Him each get their own room, XP wallet and shop (`gym.js`).
 - Shop tabs: Equipment, Decorations, My avatar (outfits), Accessories (Jewellery for Her), Themes. Buy, then Place / Remove, Wear or Apply.
 - The room shows your equipment, wall decor, neon sign, theme colours and a full-body avatar wearing your outfit, jewellery and accessories.
 - Free starters: yoga mat, dumbbell set, black outfit, first theme. Earlier puppy purchases are cleared (XP wallet is recalculated, so that XP is back).
 - Removed Three.js, `pet3d.js`, `petphoto.js` and the pup image. Edit prices in the `ITEMS`, `TH` and `O` lists at the top of `gym.js`.
 
-## v8 — Gym Room now uses your mockup art
+## v8 — Awards Room now uses your mockup art
 - Room scenes, item thumbnails, outfits and themes are cut from your mockups into `assets/gym/her/` and `assets/gym/him/` (`hero.jpg` = room scene, `o-*` outfits, `t-*` themes). Replace any file with a sharper image of the same name.
 - Prices are mockup prices ÷ 4 (editable in `gym.js`).
 
-## v10 — rooms start empty and fill as you buy
-- Each room starts with only the avatar. Buy an item, tap **Place**, and it appears in the room (equipment on the floor, decor on the wall or floor). Remove it and it leaves again.
-- Item cut-outs are `assets/gym/<her|him>/c-<key>.png` (transparent PNGs); framed wall pieces use `<key>.jpg`. Replace with cleaner cut-outs of the same name for a sharper room.
+
+## v9 updates
+- Replaced the Gym Room navigation/page with separate Her/Him collectible Awards Rooms. Awards unlock from lifetime XP milestones and must be collected once; all collected awards remain visible in a single gallery per profile. Collecting an award does not deduct XP.
+- Added a global Her/Him profile switch for the dashboard, insights, check-in selection, and Awards Room. Recent Logs has separate Her and Him tabs.
+- Improved mobile layouts for navigation, awards, forms, and logs.
+- Profile names and settings update the visible UI as they are edited/saved, and local browser tabs listen for storage changes.
+- Important: this project still stores data in browser localStorage. This supports the same browser and same-browser tabs, but not reliable syncing across different phones/computers. For true shared updates, connect a shared database (e.g. Supabase) with authenticated access and row-level security.
+
+
+## Latest updates
+- Insights compare Her (pink) and Him (blue) on the same line charts.
+- Month view groups the selected month into 7-day buckets; selecting Week 1–5 drills down to daily values in that month.
+- Work-related metrics are not included in Insights.
+- Unfinished milestones carry forward until achieved and display a current / 1-month-late / 2+-months-overdue status.
+- Insights use recorded check-ins only; missing or skipped entries are not fabricated.
+
+
+## v10 Insights update
+- Added separate My Insights and Comparison tabs.
+- Personal Insights use daily bar charts, habit progress bars, and a consistency calendar.
+- In Week 1–5 view, comparison charts plot each calendar day separately (not one weekly point); missing values leave gaps instead of being connected.
+- Whole-month comparison remains weekly aggregated.
+- No work-related metrics are included.
