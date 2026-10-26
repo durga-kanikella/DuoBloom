@@ -236,3 +236,59 @@
 .personal-day-cell small{font-size:9px;color:var(--muted)}
 @media(max-width:600px){.personal-calendar .personal-day-cell{min-height:58px;padding:5px 2px}.personal-day-cell small{font-size:8px}.personal-day-symbol{width:15px;height:15px}.personal-day-symbol.ball-symbol{width:13px;height:13px}}
 .shared-cal-symbols .cal-symbol:last-child .ball-symbol{display:none}
+
+/* v14: mobile-first layout fixes — prevent merged controls and horizontal chart scrolling */
+html,body{max-width:100%;overflow-x:hidden}
+.app,.page,#page-insights,#insightsBoard,.panel,.personal-insight-card,.insight-compare-card{min-width:0;max-width:100%}
+.chart-scroll{width:100%;max-width:100%;overflow:hidden}
+.comparison-line-chart{width:100%!important;min-width:0!important;max-width:100%;height:auto;display:block}
+button,input,select,textarea{max-width:100%;touch-action:manipulation}
+button{white-space:normal;overflow-wrap:anywhere}
+.filters{width:100%;gap:10px}
+.filters label{min-width:0}
+.insights-filters label{flex:1 1 100%;width:100%;min-width:0}
+.insights-filters input,.insights-filters select{width:100%;min-width:0}
+.insight-mode-tabs{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.insight-mode-tab{min-width:0;white-space:normal;line-height:1.25;text-align:center;overflow-wrap:anywhere}
+.tabs .tab{min-width:max-content;flex:0 0 auto}
+@media(max-width:600px){
+ .app{padding-left:12px;padding-right:12px}
+ .topbar{gap:8px;align-items:flex-start;flex-wrap:wrap}
+ .topbar>*{min-width:0}
+ .today-chip{max-width:100%;white-space:normal}
+ .tabs{max-width:100%;padding-bottom:10px;gap:5px}
+ .tabs .tab{padding:10px 11px;font-size:12px;min-height:40px}
+ .section-title,.panel-head,.insight-card-heading{min-width:0;flex-wrap:wrap}
+ .section-title>* ,.panel-head>*{min-width:0}
+ .profile-card,.panel,.report-card,.personal-insight-card,.insight-compare-card{padding:13px}
+ .primary,.secondary,.choice,.filters button{min-height:42px;max-width:100%}
+ .filters{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch}
+ .filters label{width:100%;min-width:0}
+ .check-footer{flex-wrap:wrap;align-items:stretch}
+ .check-footer button{flex:1 1 100%;width:100%}
+ .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .choice{min-width:0;padding:10px 8px;text-align:center;overflow-wrap:anywhere}
+ .personal-summary{min-width:0;flex-wrap:wrap;gap:6px}
+ .personal-summary span{overflow-wrap:anywhere}
+ .chart-scroll{overflow:hidden!important;touch-action:pan-y}
+ .comparison-line-chart{min-width:0!important;width:100%!important;height:auto!important}
+ .cmp-axis{font-size:10px}
+ .shared-calendar,.personal-calendar{gap:4px}
+ .shared-cal-day{padding:6px 1px}
+ .personal-calendar .personal-day-cell{padding:5px 1px;min-width:0}
+ .personal-day-cell small{font-size:8px;white-space:normal;overflow-wrap:anywhere;text-align:center}
+ .award-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .award-card .primary{white-space:normal;overflow-wrap:anywhere}
+ .gym-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pet-shop{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:360px){
+ .app{padding-left:8px;padding-right:8px}
+ .tabs .tab{padding:9px 8px;font-size:11px}
+ .insight-mode-tab{font-size:12px;padding:10px 5px}
+ .shared-cal-symbols{gap:3px}
+ .cal-symbol{width:14px;height:14px;flex-basis:14px}
+ .personal-calendar b{font-size:11px}
+ .personal-day-symbol{width:13px;height:13px}
+ .profile-card .pill{white-space:normal}
+}
