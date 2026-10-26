@@ -8,7 +8,7 @@ A playful, mobile-friendly wellness tracker for two profiles. Branding is update
 - Select any date (including past dates), load saved answers, view and edit, then save. First-recorded and last-updated timestamps are kept separately.
 - Recent activity can be filtered by profile, date range, and XP / no-XP / rest activity. Each input appears on its own line.
 - Daily, weekly, biweekly, monthly (30 days), yearly (365 days), and custom reports compare both profiles side by side.
-- Day streak counts successful consecutive saved days ending today. A missing check-in is pending, not automatically a lost day. Rest days do not earn gym XP.
+- Dashboard profile cards stack vertically for mobile readability and show today XP, monthly check-ins, gym days, successful days, and piggy-bank balance. Streaks are removed from the dashboard.
 - XP pass rule: maximum available daily XP minus the configurable deduction. For example, maximum 100 minus 20 = 80; 80 passes and anything below 80 is a lost day.
 - Settings for targets, XP per category, gym duration/activity options, no-XP optional habits, and configurable cadence/milestone values.
 
@@ -91,3 +91,17 @@ This is a browser-local prototype using localStorage. It does **not** yet sync b
 - In Week 1–5 view, comparison charts plot each calendar day separately (not one weekly point); missing values leave gaps instead of being connected.
 - Whole-month comparison remains weekly aggregated.
 - No work-related metrics are included.
+
+
+## v11 update
+- Dashboard profile cards are stacked one after another, with profile portraits and key monthly stats; streak concept removed from cards.
+- Personal insight bar charts include a dashed linear trend line. Comparison charts use adjacent pink (Her) and blue (Him) bars plus matching trend lines.
+- Comparison insights include a shared calendar with paired per-day indicators for both profiles.
+- Mobile charts retain horizontal scrolling where dates need room rather than squeezing all date labels together.
+- Backup/export/import code reviewed: JSON full backup restores settings, both profiles' logs, pet inventory and awards; CSV export/import handles check-ins and merges by profile/date. CSV only; .xlsx import is not supported. Browser-local storage means separate phones still do not sync without a shared backend.
+
+
+### Shared log calendar status symbols (v12)
+- Her is represented by a heart (♥); Him is represented by a football (⚽).
+- Both symbols are green when that profile meets the day’s XP threshold, red when a saved check-in is below the threshold, and grey when no check-in exists.
+- The calendar legend explains the symbols and statuses.

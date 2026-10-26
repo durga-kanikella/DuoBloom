@@ -41,7 +41,7 @@ function xpFor(p,d){let e=entry(p,d);if(!e)return 0;let x=0;for(let k of ["sleep
 function streak(p){let d=today(),n=0;while(entry(p,d)&&xpFor(p,d)>=threshold(p,d)){n++;d=shift(d,-1)}return n}
 function shift(d,days){let x=new Date(d+"T12:00:00");x.setDate(x.getDate()+days);return x.toISOString().slice(0,10)}
 function dateRange(start,end){let a=[];for(let d=start;d<=end;d=shift(d,1))a.push(d);return a}
-function card(p){let e=entry(p,today()),x=xpFor(p,today()),pass=e&&x>=threshold(p,today());return `<div class="profile-card ${p}"><div class="profile-top"><div style="display:flex;align-items:center;gap:12px"><div class="avatar avatar-art"><img src="assets/${p}-avatar.png" alt="${p==='her'?'Cute queen avatar':'Cute king avatar'}"></div><div><div class="profile-name">${esc(name(p))}</div><div class="muted small">${e?"Today's check-in saved":"No check-in yet today"}</div>${typeof weightLine=="function"?weightLine(p):""}</div></div><span class="pill">${e?(pass?"ON TRACK":"KEEP GOING"):"PENDING"}</span></div><div class="big-xp">${e?x:0} <span class="muted" style="font-size:15px">/ ${dayMax(p,e?today():null)} XP</span></div><div class="progress"><span style="width:${Math.min(100,(e?x:0)/Math.max(1,dayMax(p,e?today():null))*100)}%"></span></div><div class="stat-row"><div class="mini-stat"><strong>${streak(p)} 🔥</strong><span>day streak</span></div><div class="mini-stat"><strong>${Object.keys(state.entries[p]).filter(d=>xpFor(p,d)>=threshold(p,d)).length}</strong><span>successful days</span></div><div class="mini-stat"><strong>${Object.keys(state.entries[p]).filter(d=>xpFor(p,d)<threshold(p,d)).length}</strong><span>lost days</span></div><div class="mini-stat"><strong>₹${typeof piggy=="function"?piggy(p):0}</strong><span>piggy bank</span></div></div><button class="secondary" onclick="openCheck('${p}')">${e?"Edit today's check-in":"Start check-in"} →</button></div>`}
+function card(p){let e=entry(p,today()),x=xpFor(p,today()),pass=e&&x>=threshold(p,today()),month=today().slice(0,7),monthEntries=Object.keys(state.entries[p]||{}).filter(d=>d.startsWith(month)),gymDays=monthEntries.filter(d=>entry(p,d)?.gym&&!entry(p,d).gym.rest&&Number(entry(p,d).gym.duration)>0).length,successful=monthEntries.filter(d=>xpFor(p,d)>=threshold(p,d)).length;return `<div class="profile-card ${p}"><div class="profile-top"><div style="display:flex;align-items:center;gap:12px"><div class="avatar avatar-art"><img src="assets/${p}-avatar.png" alt="${p==='her'?'Cute queen avatar':'Cute king avatar'}"></div><div><div class="profile-name">${esc(name(p))}</div><div class="muted small">${e?"Today's check-in saved":"No check-in yet today"}</div>${typeof weightLine==="function"?weightLine(p):""}</div></div><span class="pill">${e?(pass?"ON TRACK":"KEEP GOING"):"PENDING"}</span></div><div class="big-xp">${e?x:0} <span class="muted" style="font-size:15px">/ ${dayMax(p,e?today():null)} XP today</span></div><div class="progress"><span style="width:${Math.min(100,(e?x:0)/Math.max(1,dayMax(p,e?today():null))*100)}%"></span></div><div class="stat-row"><div class="mini-stat"><strong>${monthEntries.length}</strong><span>check-ins this month</span></div><div class="mini-stat"><strong>${gymDays}</strong><span>gym days this month</span></div><div class="mini-stat"><strong>${successful}</strong><span>successful days this month</span></div><div class="mini-stat"><strong>₹${typeof piggy==="function"?piggy(p):0}</strong><span>piggy bank</span></div></div><button class="secondary" onclick="openCheck('${p}')">${e?"Edit today's check-in":"Start check-in"} →</button></div>`}
 
 const breeds=[
  {month:1,name:"Corgi",emoji:"🐕",vibe:"Tiny legs, huge personality"},
@@ -334,7 +334,7 @@ function downloadFile(filename, content, type){
  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
 function fullBackup(){
- const payload={app:"NEW ME",formatVersion:2,exportedAt:new Date().toISOString(),settings:state.settings,entries:state.entries,pets:state.pets,awards:state.awards||{her:[],him:[]}};
+ const payload={app:"NEW ME",formatVersion:2,exportedAt:new Date().toISOString(),settings:state.settings,entries:state.entries,pets:state.pets,awards:state.awards||{her:[],him:[]},milestones:state.milestones||[],punDone:state.punDone||{}};
  downloadFile(`NEW_ME_backup_${today()}.json`,JSON.stringify(payload,null,2),"application/json");
  $("backupStatus").textContent="Full backup downloaded ✓";
 }
@@ -394,6 +394,8 @@ $("importBackupFile")?.addEventListener("change",async ev=>{
    state.entries={her:candidate.entries.her||{},him:candidate.entries.him||{}};
    state.pets=candidate.pets||{her:{coins:0,owned:[],equipped:[]},him:{coins:0,owned:[],equipped:[]}};
    state.awards=candidate.awards||{her:[],him:[]};
+   state.milestones=Array.isArray(candidate.milestones)?candidate.milestones:[];
+   state.punDone=candidate.punDone||{};
    localStorage.setItem("newme_data",JSON.stringify(state));
    renderSettings();$("checkDate").value=today();loadDraft();save();setupPetMonths();renderPets();report();
    $("backupStatus").textContent="Full backup restored successfully ✓";
