@@ -2,7 +2,7 @@
 (function(){
 const S=()=>state.settings;
 state.milestones ||= [];state.punDone ||= {};
-const s0=S();s0.minXP??=50;s0.milestoneDays??=30;s0.periodMode||="month";s0.muscleDays??=5;s0.cycleStart||=today().slice(0,8)+"01";s0.weights||={her:{now:"",goal:""},him:{now:"",goal:""}};
+const s0=S();s0.minXP??=50;s0.milestoneDays??=30;s0.periodMode||="month";s0.muscleDays??=5;s0.cycleStart||=today().slice(0,8)+"01";s0.weights||={her:{},him:{}};s0.weights.her||={};s0.weights.him||={};s0.weights.her.now||="64";s0.weights.her.goal||="60";s0.weights.him.now||="75";s0.weights.him.goal||="70";
 const other=p=>p==="her"?"him":"her",day=d=>new Date(d+"T12:00:00"),fmt=d=>day(d).toLocaleDateString(undefined,{day:"numeric",month:"short"});
 const cyc=(d,len)=>Math.floor((day(d)-day(S().cycleStart))/864e5/len);
 const cycRange=(i,len)=>[shift(S().cycleStart,i*len),shift(S().cycleStart,i*len+len-1)];
@@ -62,14 +62,20 @@ document.addEventListener("click",e=>{if(e.target.id!=="msAdd")return;const t=$(
  state.milestones.push({id:"m"+Date.now(),owner:$("msOwner").value,cycle:Number($("msCycle").value),text:t,done:false});$("msText").value="";save()});
 /* celebration / motivation card */
 function showCard(html,cls){let o=$("celebrate");if(!o){o=document.createElement("div");o.id="celebrate";document.body.appendChild(o)}o.innerHTML=`<div class="cele-card ${cls}">${html}<button class="primary" id="celeClose">${cls==="win"?"Yay! ♡":"Okay, onwards"}</button></div>`;o.className="show";$("celeClose").onclick=()=>o.className=""}
-const _sv=$("saveCheckin").onclick;$("saveCheckin").onclick=()=>{const p=$("checkPerson").value,d=$("checkDate").value||today();_sv();const x=xpFor(p,d),need=threshold(p,d),n=esc(name(p));
+const _sv=$("saveCheckin").onclick;$("saveCheckin").onclick=()=>{const p=$("checkPerson").value,d=$("checkDate").value||today();
+ // The core save handler validates required gym activities and returns without saving on failure.
+ // Only show a celebration after it confirms a successful save.
+ _sv();
+ const status=$("checkStatus").textContent||"";
+ if(!status.startsWith("Saved "))return;
+ const x=xpFor(p,d),need=threshold(p,d),n=esc(name(p));
  if(x>=need)showCard(`<div class="confetti">🎉✨🎊💛🎉✨🎊</div><h2>${n} nailed it!</h2><p><b>${x} XP</b> today — above the ${need} XP you needed. Day won. Keep that glow going!</p>`,"win");
  else showCard(`<h2>Not quite today, ${n}</h2><p>${x} of ${need} XP. That's okay — one day doesn't define you. ₹${S().penalty} goes into your piggy bank and tomorrow is a fresh start. You've got this. 🌱</p>`,"try")};
 /* insights */
 const L=n=>dateRange(shift(today(),-(n-1)),today());
 const NAMES={sleep:"Sleep",water:"Water",steps:"Steps",protein:"Protein",fibre:"Fibre",food:"Food"};
 const met=(e,k)=>!e?null:k==="gym"?(e.gym?.rest?null:!!(e.gym?.duration&&e.gym?.activities?.length)):k==="food"?(["sugar","maida","junk"].every(f=>e.food?.[f]==="not_today")?null:["sugar","maida","junk"].every(f=>e.food?.[f]==="yes")):e[k]==="not_today"?null:["target","above","yes"].includes(e[k]);
-const mins=(p,d)=>{const e=entry(p,d);return e&&!e.gym?.rest&&e.gym?.duration?Number(e.gym.duration):0};
+const mins=(p,d)=>{const e=entry(p,d);return e&&!e.gym?.rest&&!e.gym?.notToday&&e.gym?.duration?Number(e.gym.duration):0};
 const svgB=(lab,val,max,o={})=>{const w=360,h=150,bw=w/lab.length;return `<svg viewBox="0 0 ${w} ${h+22}" class="chart">${[0,.5,1].map(f=>`<line x1="0" x2="${w}" y1="${h-f*h}" y2="${h-f*h}" class="grid"/><text x="0" y="${h-f*h-2}" class="axis">${(max*f).toFixed(max<5?1:0)}${o.unit||""}</text>`).join("")}${val.map((v,i)=>{const bh=Math.max(1,v/max*h);return `<rect x="${i*bw+bw*.18}" y="${h-bh}" width="${bw*.64}" height="${bh}" rx="6" class="${o.warn&&o.warn[i]?"bar warn":"bar"}"/><text x="${i*bw+bw/2}" y="${h+14}" text-anchor="middle" class="axis">${lab[i]}</text>`}).join("")}${o.goal!=null?`<line x1="0" x2="${w}" y1="${h-o.goal/max*h}" y2="${h-o.goal/max*h}" class="goal"/>`:""}</svg>`};
 const svgL=(lab,series,max,unit="")=>{const w=360,h=150,st=w/(lab.length-1||1);return `<svg viewBox="0 0 ${w+20} ${h+22}" class="chart">${[0,.5,1].map(f=>`<line x1="10" x2="${w+10}" y1="${h-f*h}" y2="${h-f*h}" class="grid"/><text x="10" y="${h-f*h-2}" class="axis">${Math.round(max*f)}${unit}</text>`).join("")}${series.map((s,k)=>`<polyline fill="none" class="ln l${k}" points="${s.vals.map((v,i)=>`${10+i*st},${h-(v/max)*h}`).join(" ")}"/>${s.vals.map((v,i)=>`<circle cx="${10+i*st}" cy="${h-(v/max)*h}" r="3.5" class="dot l${k}"/>`).join("")}`).join("")}${lab.map((t,i)=>`<text x="${10+i*st}" y="${h+14}" text-anchor="middle" class="axis">${t}</text>`).join("")}</svg><div class="legend">${series.map((s,k)=>`<span><i class="sw l${k}"></i>${s.name}</span>`).join("")}</div>`};
 const streakG=(p,k)=>{let n=0,miss=[],d=today(),e0=entry(p,d)?null:1;for(let i=0;i<120;i++){const m=met(entry(p,d),k);if(m===true)n++;else if(m===false){miss.push(i);if(miss.length>1&&miss[miss.length-1]-miss[miss.length-2]<7)break}d=shift(d,-1)}return n};
@@ -122,9 +128,9 @@ function insightGroups(){
 }
 function insightMetric(p,d,k){
  const e=entry(p,d);if(!e)return null;
- if(k==='gym')return e.gym?.rest?null:(e.gym?.duration&&e.gym?.activities?.length?100:0);
- if(k==='duration')return e.gym?.rest?null:(e.gym?.duration!==''&&e.gym?.duration!=null?Number(e.gym.duration):null);
- if(k==='activities')return e.gym?.rest?null:(e.gym?.activities?.length?e.gym.activities.join(', '):null);
+ if(k==='gym')return e.gym?.rest||e.gym?.notToday?null:(e.gym?.duration&&e.gym?.activities?.length?100:0);
+ if(k==='duration')return e.gym?.rest||e.gym?.notToday?null:(e.gym?.duration!==''&&e.gym?.duration!=null?Number(e.gym.duration):null);
+ if(k==='activities')return e.gym?.rest||e.gym?.notToday?null:(e.gym?.activities?.length?e.gym.activities.join(', '):null);
  if(k==='food'){
    const vals=['sugar','maida','junk'].map(f=>e.food?.[f]);
    if(vals.every(v=>!v||v==='not_today'))return null;
@@ -158,6 +164,47 @@ function personalHabitCard(title,desc,p,days,keys){
 function personalCalendar(p,days){
  return `<article class="panel personal-insight-card"><h2>Daily XP calendar</h2><p class="muted">Each day uses the same XP status rule as the shared calendar: green = daily XP threshold met, red = logged but below threshold, grey = no log. ${p==='her'?'♥ marks your days.':'● marks your days.'}</p><div class="personal-calendar">${days.map(d=>{const e=entry(p,d);const status=!e?'cal-empty':xpFor(p,d)>=threshold(p,d)?'cal-good':'cal-missed';const symbol=p==='her'?'<span class="personal-day-symbol heart-symbol">♥</span>':'<span class="personal-day-symbol ball-symbol" aria-label="Him"></span>';return `<div class="personal-day-cell" title="${esc(name(p))} · ${d} · ${e?xpFor(p,d)+' XP / '+threshold(p,d)+' XP required':'No log'}"><b>${Number(d.slice(-2))}</b>${symbol.replace('personal-day-symbol','personal-day-symbol '+status)}<small>${e?xpFor(p,d)+' XP':'No log'}</small></div>`}).join('')}</div><div class="bar-legend"><span><i class="legend-status-good"></i>XP target met</span><span><i class="legend-status-missed"></i>Below XP target</span><span><i class="legend-status-empty"></i>Not logged</span></div></article>`;
 }
+
+function periodKpiValues(p,days){
+ const saved=days.filter(d=>!!entry(p,d));
+ const won=saved.filter(d=>xpFor(p,d)>=threshold(p,d));
+ const sessions=days.filter(d=>{const g=entry(p,d)?.gym;return !!(g&&!g.rest&&!g.notToday&&g.duration&&g.activities?.length)});
+ const minutes=sessions.reduce((n,d)=>n+Number(entry(p,d).gym.duration||0),0);
+ const avgMinutes=sessions.length?Math.round(minutes/sessions.length):0;
+ const totalXP=saved.reduce((n,d)=>n+xpFor(p,d),0);
+ const pct=k=>{const vals=days.map(d=>metricValue(p,d,k)).filter(v=>v!==null);return vals.length?Math.round(vals.filter(v=>v===100).length/vals.length*100):null};
+ return {saved:saved.length,won:won.length,winRate:saved.length?Math.round(won.length/saved.length*100):0,sessions:sessions.length,minutes,avgMinutes,totalXP,sleep:pct('sleep'),steps:pct('steps'),protein:pct('protein'),fibre:pct('fibre')};
+}
+function personalKpiPanel(p,days){
+ const k=periodKpiValues(p,days),item=(v,l,sub='')=>`<div class="ins-kpi"><strong>${v}</strong><span>${l}</span>${sub?`<small>${sub}</small>`:''}</div>`;
+ return `<section class="ins-kpi-section"><h2>Key performance indicators</h2><p class="muted">A quick summary for the selected period.</p><div class="ins-kpi-grid">
+ ${item(k.totalXP.toLocaleString(),'Total XP earned')}
+ ${item(k.winRate+'%','XP target success',`${k.won} of ${k.saved} logged days`)}
+ ${item(k.saved+'/'+days.length,'Check-ins saved')}
+ ${item(k.sessions,'Gym sessions',`${k.minutes} total workout minutes`)}
+ ${item(k.avgMinutes+' min','Average workout','Per workout session')}
+ ${item(k.sleep===null?'—':k.sleep+'%','Sleep target rate')}
+ ${item(k.steps===null?'—':k.steps+'%','Step target rate')}
+ ${item(k.protein===null?'—':k.protein+'%','Protein target rate')}
+ ${item(k.fibre===null?'—':k.fibre+'%','Fibre target rate')}
+ </div></section>`;
+}
+function comparisonKpiPanel(days){
+ const h=periodKpiValues('her',days),m=periodKpiValues('him',days);
+ const row=(label,a,b)=>`<div class="ins-kpi-compare-row"><span>${label}</span><b class="avg-her">${a}</b><b class="avg-him">${b}</b></div>`;
+ const f=(v,s='')=>v===null?'—':v+s;
+ return `<section class="ins-kpi-section"><h2>Key performance indicators</h2><p class="muted">Her and Him side by side for the selected period.</p><div class="ins-kpi-compare"><div class="ins-kpi-compare-head"><span>Metric</span><b class="avg-her">Her</b><b class="avg-him">Him</b></div>
+ ${row('Total XP',h.totalXP.toLocaleString(),m.totalXP.toLocaleString())}
+ ${row('XP target success',h.winRate+'%',m.winRate+'%')}
+ ${row('Check-ins saved',h.saved+'/'+days.length,m.saved+'/'+days.length)}
+ ${row('Gym sessions',h.sessions,m.sessions)}
+ ${row('Average workout',f(h.avgMinutes,' min'),f(m.avgMinutes,' min'))}
+ ${row('Sleep target rate',f(h.sleep,'%'),f(m.sleep,'%'))}
+ ${row('Step target rate',f(h.steps,'%'),f(m.steps,'%'))}
+ ${row('Protein target rate',f(h.protein,'%'),f(m.protein,'%'))}
+ ${row('Fibre target rate',f(h.fibre,'%'),f(m.fibre,'%'))}
+ </div></section>`;
+}
 function renderPersonalInsights(info){
  const host=$('insightsBoard'),p=window.activeProfile||'her',nameP=esc(name(p)),days=info.groups.flatMap(g=>g.days);
  if(!days.length){host.innerHTML='<div class="panel">This week does not exist in the selected month. Choose another week.</div>';return}
@@ -177,7 +224,7 @@ function renderPersonalInsights(info){
       svgDailyBars('Sleep target','Target met = 100%, below target = 0%',dates,sleep,'%'),
       svgDailyBars('Steps target','Target met = 100%, below target = 0%',dates,steps,'%')
     ].join('');
- host.innerHTML=header+`<div class="personal-insight-grid">${charts}${personalHabitCard('Nutrition & habits','Percent of recorded days each target was met.',p,dates,[['protein','Protein'],['fibre','Fibre'],['food','No-sugar / no-maida / no-junk combined'],['sugar','No sugar'],['maida','No maida']])}${personalCalendar(p,dates)}</div>`;
+ host.innerHTML=header+personalKpiPanel(p,dates)+`<div class="personal-insight-grid">${charts}${personalHabitCard('Nutrition & habits','Percent of recorded days each target was met.',p,dates,[['protein','Protein'],['fibre','Fibre'],['food','No-sugar / no-maida / no-junk combined'],['sugar','No sugar'],['maida','No maida']])}${personalCalendar(p,dates)}</div>`;
 }
 function svgCompareLine(title,desc,labels,herVals,himVals,unit='%'){
  const w=Math.max(640,labels.length*62),h=230,l=42,r=14,t=18,b=48,iw=w-l-r,ih=h-t-b,all=[...herVals,...himVals].filter(v=>v!==null&&Number.isFinite(v));
@@ -189,7 +236,7 @@ function svgCompareLine(title,desc,labels,herVals,himVals,unit='%'){
  return `<article class="panel insight-compare-card"><div class="insight-card-heading"><div><h2>${esc(title)}</h2><p class="muted">${esc(desc)}</p><div class="bar-legend"><span><i class="legend-her-bar"></i>Her</span><span><i class="legend-him-bar"></i>Him</span><span>Lines = trends</span></div></div><div class="insight-averages"><span class="avg-her">Her ${avg(herVals)===null?'—':avg(herVals)+unit}</span><span class="avg-him">Him ${avg(himVals)===null?'—':avg(himVals)+unit}</span></div></div><div class="chart-scroll"><svg viewBox="0 0 ${w} ${h}" style="width:100%;min-width:0;height:auto" class="comparison-line-chart" role="img" aria-label="${esc(title)} paired bars and trend lines">${grid}${bars}${trend(hp)}${trend(mp)}${xlabels}</svg></div>${all.length?'':'<p class="muted small">No recorded data for this period yet.</p>'}</article>`;
 }
 function renderComparisonInsights(info){
- const host=$('insightsBoard'),groups=info.groups;
+ const host=$('insightsBoard');let groups=info.groups;
  if(!groups.length){host.innerHTML='<div class="panel">This week does not exist in the selected month. Choose another week.</div>';return}
  let labels,herVals,himVals;
  if(info.view==='month'){
@@ -216,7 +263,7 @@ function renderComparisonInsights(info){
  }).join('');
  const days=dailyGroups.flatMap(g=>g.days);
  const cal=`<article class="panel personal-insight-card"><h2>Shared log calendar</h2><p class="muted">♥ Heart = Her · solid circle = Him. Green means daily XP met the required threshold; red means the logged day fell below it; grey means no check-in was saved.</p><div class="shared-calendar">${days.map(d=>{const status=p=>{const e=entry(p,d);return !e?'cal-empty':xpFor(p,d)>=threshold(p,d)?'cal-good':'cal-missed'};return `<div class="shared-cal-day"><b>${Number(d.slice(-2))}</b><div class="shared-cal-symbols"><span class="cal-symbol ${status('her')}" title="Her · ${d} · ${entry('her',d)?xpFor('her',d)+' XP':'No log'}">♥</span><span class="cal-symbol ${status('him')}" title="Him · ${d} · ${entry('him',d)?xpFor('him',d)+' XP':'No log'}"><i class="ball-symbol"></i></span></div></div>`}).join('')}</div><div class="bar-legend"><span><b class="cal-legend-symbol cal-good">♥</b>Her</span><span><b class="cal-legend-symbol cal-good"><i class="ball-symbol"></i></b>Him</span><span><i class="legend-status-good"></i>Met XP threshold</span><span><i class="legend-status-missed"></i>Below XP threshold</span><span><i class="legend-status-empty"></i>No log</span></div></article>`;
- host.innerHTML=`<div class="ins-period-summary"><div><b>${new Date(info.y,info.mo-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}</b><p class="muted">${info.view==='month'?'Weekly comparison; paired bars show each week’s average.':`Daily comparison across ${days[0]} to ${days[days.length-1]}; each day has paired bars.`}</p></div><div class="ins-profile-key"><span class="key-her">● Her</span><span class="key-him">● Him</span></div></div><div class="insight-compare-grid">${cards}</div>${cal}`;
+ host.innerHTML=`<div class="ins-period-summary"><div><b>${new Date(info.y,info.mo-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}</b><p class="muted">${info.view==='month'?'Weekly comparison; paired bars show each week’s average.':`Daily comparison across ${days[0]} to ${days[days.length-1]}; each day has paired bars.`}</p></div><div class="ins-profile-key"><span class="key-her">● Her</span><span class="key-him">● Him</span></div></div>${comparisonKpiPanel(days)}<div class="insight-compare-grid">${cards}</div>${cal}`;
 }
 function renderInsights(){
  const host=$('insightsBoard');if(!host)return;

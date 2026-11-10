@@ -292,3 +292,30 @@ button{white-space:normal;overflow-wrap:anywhere}
  .personal-day-symbol{width:13px;height:13px}
  .profile-card .pill{white-space:normal}
 }
+
+/* v15: matching calendar symbols with transparent backgrounds */
+.shared-cal-symbols .cal-symbol:first-child{font-size:18px;width:18px;height:18px;flex:0 0 18px;background:transparent!important;color:inherit}
+.shared-cal-symbols .cal-symbol:first-child.cal-good{color:#16a34a}
+.shared-cal-symbols .cal-symbol:first-child.cal-missed{color:#dc2626}
+.shared-cal-symbols .cal-symbol:first-child.cal-empty{color:#cbd5e1}
+.shared-cal-symbols .cal-symbol:last-child{width:18px;height:18px;flex:0 0 18px;border-radius:50%}
+.personal-day-symbol.heart-symbol{width:18px;height:18px;flex:0 0 18px;background:transparent!important;font-size:18px}
+.personal-day-symbol.ball-symbol{width:18px;height:18px;flex:0 0 18px}
+
+/* NEW ME: balanced calendar symbols and Insights KPI dashboard */
+.shared-cal-symbols .cal-symbol:last-child{width:15px!important;height:15px!important;flex:0 0 15px!important;min-width:15px!important;min-height:15px!important}
+.shared-cal-symbols .cal-symbol:first-child{width:19px!important;height:19px!important;flex:0 0 19px!important;font-size:18px!important}
+.shared-cal-symbols .cal-symbol:last-child .ball-symbol{display:none!important}
+.cal-legend-symbol .ball-symbol{width:13px;height:13px}
+.personal-day-symbol.ball-symbol{width:14px!important;height:14px!important;flex:0 0 14px!important}
+.ins-kpi-section{margin:16px 0 18px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:18px;min-width:0}
+.ins-kpi-section h2{font-size:18px;margin:0 0 4px}.ins-kpi-section>p{font-size:12px;margin:0 0 14px}
+.ins-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ins-kpi{min-width:0;padding:13px;border-radius:13px;background:#faf6fc;display:flex;flex-direction:column;gap:3px}
+.ins-kpi strong{font-size:23px;line-height:1.2;color:#38234f;overflow-wrap:anywhere}
+.ins-kpi span{font-size:12px;font-weight:750;color:#665778}.ins-kpi small{font-size:10px;color:var(--muted)}
+.ins-kpi-compare{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.ins-kpi-compare-head,.ins-kpi-compare-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(64px,.45fr) minmax(64px,.45fr);gap:10px;align-items:center;padding:10px 13px}
+.ins-kpi-compare-head{background:#faf6fc;font-size:12px}.ins-kpi-compare-row{border-top:1px solid var(--line);font-size:13px}.ins-kpi-compare-row>span{color:var(--muted)}
+.ins-kpi-compare-row>b,.ins-kpi-compare-head>b{text-align:right}.ins-kpi-compare .avg-her{color:#d94d91}.ins-kpi-compare .avg-him{color:#347bd3}
+@media(max-width:600px){.shared-cal-symbols .cal-symbol:last-child{width:13px!important;height:13px!important;flex-basis:13px!important;min-width:13px!important;min-height:13px!important}.shared-cal-symbols .cal-symbol:first-child{width:17px!important;height:17px!important;flex-basis:17px!important;font-size:16px!important}.ins-kpi-section{padding:13px}.ins-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ins-kpi{padding:10px}.ins-kpi strong{font-size:19px}.ins-kpi-compare-head,.ins-kpi-compare-row{grid-template-columns:minmax(0,1fr) minmax(48px,.35fr) minmax(48px,.35fr);gap:6px;padding:9px 8px;font-size:11px}}

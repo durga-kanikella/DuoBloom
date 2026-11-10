@@ -56,7 +56,7 @@
 
   async function openApp(user) {
     currentUser = user;
-    say("Loading your shared DuoBloom data…");
+    say("Loading your shared NEW ME data…");
     const { data, error } = await client.from(TABLE).select("app_state,updated_at").eq("user_id", user.id).maybeSingle();
     if (error) throw error;
     let initial;
@@ -111,7 +111,7 @@
     const write = async () => {
       saving = true;
       const status = $("cloudSyncStatus");
-      if (status) status.textContent = "Saving to DuoBloom cloud…";
+      if (status) status.textContent = "Saving to NEW ME cloud…";
       try {
         const { error } = await client.from(TABLE).upsert({
           user_id: currentUser.id,
@@ -121,7 +121,7 @@
         if (error) throw error;
         if (status) status.textContent = `Cloud synced · ${new Date().toLocaleTimeString()}`;
       } catch (error) {
-        console.error("DuoBloom cloud save failed:", error);
+        console.error("NEW ME cloud save failed:", error);
         if (status) status.textContent = `Cloud save failed: ${error.message}. Latest changes remain cached on this device until sync succeeds.`;
       } finally {
         saving = false;
@@ -150,7 +150,7 @@
   }
 
   $("signOutBtn")?.addEventListener("click", async () => {
-    if (!confirm("Sign out of DuoBloom on this device? Your cloud data will remain saved.")) return;
+    if (!confirm("Sign out of NEW ME on this device? Your cloud data will remain saved.")) return;
     if (remoteChannel) await client.removeChannel(remoteChannel);
     await client.auth.signOut();
     localStorage.removeItem(CACHE_KEY);

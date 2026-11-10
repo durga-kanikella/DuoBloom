@@ -1,4 +1,4 @@
-# DuoBloom cloud setup
+# NEW ME cloud setup
 
 ## What's changed
 - Adds Supabase email/password authentication. Create one shared account and use the same email/password on both devices.
@@ -14,14 +14,14 @@
 1. Open your existing project: https://supabase.com/dashboard/project/kkbntqeusndfvoqvgifb
 2. Open SQL Editor and create a new query.
 3. Paste all contents of `supabase_setup.sql` and click Run.
-4. In Authentication > URL Configuration, add your GitHub Pages URL to the allowed redirect URLs if you use email confirmation. For this app, the site URL should be `https://durga-kanikella.github.io` and the redirect URL can be `https://durga-kanikella.github.io/DuoBloom/`.
+4. In Authentication > URL Configuration, add your GitHub Pages URL to the allowed redirect URLs if you use email confirmation. For this app, the site URL should be `https://durga-kanikella.github.io` and the redirect URL can be `https://durga-kanikella.github.io/NEW ME/`.
 5. In Authentication > Providers > Email, decide whether email confirmation is enabled. If enabled, confirm the account email before signing in.
 
 ## Deploy
 1. Download/extract this ZIP.
-2. Upload the *contents* of the `NEW_ME` folder to the root of your DuoBloom GitHub repository, replacing the old app files.
+2. Upload the *contents* of the `NEW_ME` folder to the root of your NEW ME GitHub repository, replacing the old app files.
 3. Commit and push to the branch/folder configured for GitHub Pages.
-4. Open `https://durga-kanikella.github.io/DuoBloom/` and choose **Create the shared account** once. Use that same email/password on both devices thereafter.
+4. Open `https://durga-kanikella.github.io/NEW ME/` and choose **Create the shared account** once. Use that same email/password on both devices thereafter.
 5. Test a check-in on one device, then verify it appears on the other device.
 
 ## Security notes
