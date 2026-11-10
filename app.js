@@ -4,15 +4,20 @@ let state=JSON.parse(localStorage.getItem("newme_data")||"null")||{settings:stru
 let draft={}; 
 state.entries ||= {her:{},him:{}}; state.entries.her ||= {}; state.entries.him ||= {};
 if(!Object.keys(state.entries.her).length && !Object.keys(state.entries.him).length) state._demoSeeded=true;
-state.settings ||= structuredClone(defaults);
+state.settings = {...structuredClone(defaults), ...(state.settings||{})};
+state.settings.names = {...defaults.names, ...(state.settings.names||{})};
+state.settings.targets = {...defaults.targets, ...(state.settings.targets||{})};
 state.settings.xp = {...defaults.xp, ...(state.settings.xp||{})};
+state.settings.durations = Array.isArray(state.settings.durations) && state.settings.durations.length ? state.settings.durations : [...defaults.durations];
+state.settings.activities = Array.isArray(state.settings.activities) && state.settings.activities.length ? state.settings.activities : [...defaults.activities];
+state.settings.habits = {...defaults.habits, ...(state.settings.habits||{})};
 state.settings.penalty = Number.isFinite(Number(state.settings.penalty)) ? Number(state.settings.penalty) : 100;
 state.settings.deduction = 20;
 state.settings.punishmentDays = Number(state.settings.punishmentDays)||30;
 state.settings.milestoneFrequency = "monthly";
 delete state.settings.milestoneDays; delete state.settings.milestoneXP; delete state.settings.milestoneAmount;
 // First-run demo data: three months of varied combinations for both profiles.
-if(!state._emptyByChoice && !Object.keys(state.entries?.her||{}).length && !Object.keys(state.entries?.him||{}).length) {
+if(false && !state._emptyByChoice && !Object.keys(state.entries?.her||{}).length && !Object.keys(state.entries?.him||{}).length) {
  const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth()-2,1);
  for(const person of ["her","him"]) {
   for(let offset=0;offset<Math.min(3,3);offset++) {
@@ -31,7 +36,7 @@ if(!state._emptyByChoice && !Object.keys(state.entries?.her||{}).length && !Obje
  state.pets ||= {her:{coins:0,owned:[],equipped:[]},him:{coins:0,owned:[],equipped:[]}};
 }
 state.pets ||= {her:{breedMonth:"",coins:0,owned:[],equipped:[]},him:{breedMonth:"",coins:0,owned:[],equipped:[]}};
-const save=()=>{localStorage.setItem("newme_data",JSON.stringify(state));renderDashboard();renderProfiles();renderRecent();if(document.getElementById("petSplit"))renderPets();if(window.renderAwards)window.renderAwards();};
+const save=()=>{window.persistNewMeState ? window.persistNewMeState(state) : localStorage.setItem("newme_data",JSON.stringify(state));renderDashboard();renderProfiles();renderRecent();if(document.getElementById("petSplit"))renderPets();if(window.renderAwards)window.renderAwards();};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const settings=()=>state.settings, name=p=>settings().names[p], entry=(p,d)=>state.entries[p][d];
 function maxXP(){let x=settings().xp;return Object.keys(x).reduce((a,k)=>a+Number(x[k]||0)*(k==="food"?3:1),0)}
@@ -184,57 +189,50 @@ $("checkForm").querySelectorAll("[data-habit]").forEach(c=>c.addEventListener("c
 function draftMax(){let P=$("checkPerson").value,D=$("checkDate").value,old=entry(P,D);state.entries[P][D]=draft;let m=dayMax(P,D);if(old)state.entries[P][D]=old;else delete state.entries[P][D];return m}
 function draftXP(){let old=entry($("checkPerson").value,$("checkDate").value);state.entries[$("checkPerson").value][$("checkDate").value]=draft;let x=xpFor($("checkPerson").value,$("checkDate").value);if(old)state.entries[$("checkPerson").value][$("checkDate").value]=old;else delete state.entries[$("checkPerson").value][$("checkDate").value];return x}
 function loadDemoData(force=false){
- if(force && !confirm("Load the NEW ME sample dataset? This replaces existing check-ins and resets settings on this browser.")) return;
- state.settings=JSON.parse(JSON.stringify(defaults));
- state.entries={her:{},him:{}};
- const now=new Date();
- // Previous two complete months plus every date in the current month through today.
- for(const person of ["her","him"]) {
-  for(let offset=2;offset>=0;offset--) {
-   const month=new Date(now.getFullYear(),now.getMonth()-offset,1);
-   const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
-   const limit=offset===0?now.getDate():daysInMonth;
-   for(let day=1;day<=limit;day++) {
-    const dt=new Date(month.getFullYear(),month.getMonth(),day);
-    const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    const idx=(day+offset+(person==="him"?2:0))%8;
-    const choices=["yes","no","not_today"];
-    const sleep=["target","below","above","not_today"][idx%4];
-    const water=["target","below","above","not_today"][(idx+1)%4];
-    const steps=["target","below","above","not_today"][(idx+2)%4];
+ if(force && !confirm("Add 10 October 2026 sample check-ins for Her and Him? Existing genuine records will be kept; existing demo records for these dates will be refreshed.")) return;
+ try {
+  // Remove only earlier demo records; preserve genuine records and all saved settings.
+  for(const person of ["her","him"]) for(const [date,record] of Object.entries(state.entries[person]||{})) if(record?._demo) delete state.entries[person][date];
+  const choices=["yes","no","not_today"];
+  for(const person of ["her","him"]) {
+   for(let day=1;day<=10;day++) {
+    const key=`2026-10-${String(day).padStart(2,"0")}`;
+    const idx=(day+(person==="him"?2:0))%8;
+    const stamp=new Date(2026,9,day,20,0,0).toISOString();
     const gym=(idx===0||idx===5)?{duration:"",activities:[],rest:true}:{duration:[30,45,60,90][idx%4],activities:[["Cardio"],["Biceps","Abs"],["Back"],["Legs","Chest"]][idx%4],rest:false};
-    const stamp=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),20,0,0).toLocaleString();
-    const e={sleep,water,steps,protein:choices[idx%3],fibre:choices[(idx+1)%3],gym,food:{sugar:choices[idx%3],maida:choices[(idx+1)%3],junk:choices[(idx+2)%3]},habits:{},createdAt:stamp,updatedAt:stamp,petCreditedXP:0,_demo:true};
-    for(const h of (defaults.habits[person]||[])) e.habits[h]=choices[(idx+h.length)%3];
-    state.entries[person][key]=e;
+    const record={sleep:["target","below","above","not_today"][idx%4],water:["target","below","above","not_today"][(idx+1)%4],steps:["target","below","above","not_today"][(idx+2)%4],protein:choices[idx%3],fibre:choices[(idx+1)%3],gym,food:{sugar:choices[idx%3],maida:choices[(idx+1)%3],junk:choices[(idx+2)%3]},habits:{},createdAt:stamp,updatedAt:stamp,petCreditedXP:0,_demo:true};
+    for(const h of (settings().habits?.[person]||[])) record.habits[h]=choices[(idx+h.length)%3];
+    state.entries[person][key]=record;
    }
   }
- }
- state.pets={her:{breedMonth:"",coins:0,owned:[],equipped:[]},him:{breedMonth:"",coins:0,owned:[],equipped:[]}};
- state._demoSeeded=true;
- try {
-  localStorage.setItem("newme_data",JSON.stringify(state));
+  state._emptyByChoice=false;
+  state.pets ||= {her:{breedMonth:"",coins:0,owned:[],equipped:[]},him:{breedMonth:"",coins:0,owned:[],equipped:[]}};
   renderSettings();
-  save();
-  // Refresh the actual visible check-in form and history after seeding.
   $("checkDate").value=today();
-  loadDraft();
-  renderCheckForm();
-  renderRecent();
-  renderDashboard();
-  renderProfiles();
-  setupPetMonths();
-  renderPets();
-  report();
-  const status=$("settingsSaveStatus");
-  if(status) status.textContent=`Sample data loaded successfully: ${Object.keys(state.entries.her).length} Her logs and ${Object.keys(state.entries.him).length} Him logs.`;
-  toast("Sample check-ins loaded for both profiles ♡");
+  loadDraft(); renderCheckForm(); renderRecent(); renderDashboard(); renderProfiles(); setupPetMonths(); renderPets(); report();
+  save();
+  const status=$("settingsSaveStatus"); if(status) status.textContent="Added 10 October 2026 sample logs for Her and Him ✓";
+  toast("20 sample check-ins added ♡");
  } catch(err) {
   console.error("NEW ME sample-data load failed:",err);
-  const status=$("settingsSaveStatus");
-  if(status) status.textContent=`Sample data was generated but the screen could not refresh: ${err.message}`;
-  toast("Sample data load error — check browser console");
+  const status=$("settingsSaveStatus"); if(status) status.textContent=`Sample-data load failed: ${err.message}`;
+  toast("Sample data load error — check console");
  }
+}
+function resetDemoData(){
+ const count={her:0,him:0};
+ for(const person of ["her","him"]) for(const [date,record] of Object.entries(state.entries[person]||{})) if(record?._demo){delete state.entries[person][date];count[person]++;}
+ save(); renderRecent(); report();
+ const status=$("settingsSaveStatus"); if(status) status.textContent=`Removed ${count.her} Her and ${count.him} Him demo records. Genuine records and settings were kept.`;
+ toast("Demo records removed; genuine data kept");
+}
+function resetAllData(){
+ if(!confirm("RESET ALL DUOBLOOM DATA? This permanently deletes every check-in (demo and genuine), settings, milestones, piggy-bank records, rewards, pets and awards for this shared account on every device. This cannot be undone. Download a backup first if needed.")) return;
+ state={settings:structuredClone(defaults),entries:{her:{},him:{}},pets:{her:{breedMonth:"",coins:0,owned:[],equipped:[]},him:{breedMonth:"",coins:0,owned:[],equipped:[]}},awards:{her:[],him:[]},milestones:[],punDone:{},_emptyByChoice:true};
+ window.persistNewMeState ? window.persistNewMeState(state,{immediate:true}) : localStorage.setItem("newme_data",JSON.stringify(state));
+ renderSettings(); $("checkDate").value=today(); loadDraft(); renderCheckForm(); renderDashboard(); renderProfiles(); renderRecent(); setupPetMonths(); renderPets(); if(window.renderAwards)window.renderAwards(); report();
+ const status=$("settingsSaveStatus"); if(status) status.textContent="All app data has been reset across the shared account.";
+ toast("All DuoBloom data reset");
 }
 function renderSettings(){let s=settings();$("herName").value=s.names.her;$("himName").value=s.names.him;const targetId={sleep:"sleepTarget",water:"waterTarget",steps:"stepTarget"};for(let k of ["sleep","water","steps"])$(targetId[k]).value=s.targets[k];$("gymDurations").value=s.durations.join(", ");$("gymActivities").value=s.activities.join(", ");$("restLabel").value=s.restLabel||"Rest day";for(let k of Object.keys(s.xp))$("xp"+k[0].toUpperCase()+k.slice(1)).value=s.xp[k];$("xpDeduction").value=s.deduction;$("missPenalty").value=s.penalty;$("punishmentDays").value=s.punishmentDays;$("punishments").value=s.punishments.join("\n");$("herHabits").value=s.habits.her.join(", ");$("himHabits").value=s.habits.him.join(", ");$("thresholdPreview").textContent=`Maximum possible XP: ${maxXP()} · Deduction: ${s.deduction} · Passing threshold: ${threshold()} XP (exactly ${threshold()} passes).`}
 function report(){
@@ -275,9 +273,9 @@ function saveSettings(e){
   s.punishmentDays=Math.max(1,Number($("punishmentDays").value)||30);
   s.punishments=$("punishments").value.split("\n").map(v=>v.trim()).filter(Boolean);
   s.habits={her:$("herHabits").value.split(",").map(v=>v.trim()).filter(Boolean),him:$("himHabits").value.split(",").map(v=>v.trim()).filter(Boolean)};
-  localStorage.setItem("newme_data",JSON.stringify(state));
+  window.persistNewMeState ? window.persistNewMeState(state) : localStorage.setItem("newme_data",JSON.stringify(state));
   renderDashboard();renderProfiles();renderRecent();renderPets();
-  $("settingsSaveStatus").textContent="Saved on this device ✓";
+  $("settingsSaveStatus").textContent="Saved; syncing to shared cloud…";
   $("thresholdPreview").textContent=`Maximum possible XP: ${maxXP()} · Deduction: ${s.deduction} · Passing threshold: ${threshold()} XP (exactly ${threshold()} passes).`;
   toast("Settings saved ♡");
  } catch(err) {
@@ -301,10 +299,10 @@ function persistSettingsDraft(){
   for(const [field,key,min] of [["xpDeduction","deduction",0],["missPenalty","penalty",0],["punishmentDays","punishmentDays",1]]){const n=Number($(field).value);if(Number.isFinite(n)&&n>=min)s[key]=n;}
   s.punishments=$("punishments").value.split("\n").map(v=>v.trim()).filter(Boolean);
   s.habits={her:$("herHabits").value.split(",").map(v=>v.trim()).filter(Boolean),him:$("himHabits").value.split(",").map(v=>v.trim()).filter(Boolean)};
-  localStorage.setItem("newme_data",JSON.stringify(state));
+  window.persistNewMeState ? window.persistNewMeState(state) : localStorage.setItem("newme_data",JSON.stringify(state));
   document.querySelectorAll("[data-profile-name]").forEach(el=>{el.textContent=s.names[el.dataset.profileName]||el.dataset.profileName});
   if(window.renderDashboard)window.renderDashboard();if(window.renderAwards)window.renderAwards();if(typeof renderRecent==="function")renderRecent();if(typeof renderInsights==="function")renderInsights();
-  const status=$("settingsSaveStatus");if(status)status.textContent="Changes saved automatically on this device";
+  const status=$("settingsSaveStatus");if(status)status.textContent="Changes saved; syncing to shared cloud…";
   const preview=$("thresholdPreview");if(preview)preview.textContent=`Maximum possible XP: ${maxXP()} · Deduction: ${s.deduction} · Passing threshold: ${threshold()} XP (exactly ${threshold()} passes).`;
  } catch(err) { console.error("Could not persist settings draft:",err); }
 }
@@ -313,19 +311,14 @@ $("settingsForm").querySelectorAll("input,textarea,select").forEach(el=>{
  el.addEventListener("change",persistSettingsDraft);
 });
 $("loadDemoData").onclick=(event)=>{event?.preventDefault();loadDemoData(true);};
-$("resetData").onclick=()=>{if(confirm("Restore the NEW ME demo dataset? This replaces check-ins and settings on this browser.")){loadDemoData(false);}};
+$("resetData").onclick=()=>{if(confirm("Remove only demo records? Genuine check-ins and settings will be preserved."))resetDemoData();};
+$("resetAllData").onclick=resetAllData;
 $("reportPeriod").onchange=()=>{if($("reportPeriod").value!=="custom")report()};$("runReport").onclick=report;
 
 function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2200)}
 const totalDemoEntries=Object.keys(state.entries.her||{}).length+Object.keys(state.entries.him||{}).length;
-if(totalDemoEntries===0){
-  // Seed before any UI renderer runs, so an empty-state renderer cannot prevent sample initialization.
-  loadDemoData(false);
-} else {
-  renderSettings();$("checkDate").value=today();$("reportEnd").value=today();$("reportStart").value=today();loadDraft();save();setupPetMonths();renderPets();report();
-  const st=$("settingsSaveStatus");
-  if(st) st.textContent=`Loaded ${Object.keys(state.entries.her||{}).length} Her logs and ${Object.keys(state.entries.him||{}).length} Him logs on this browser.`;
-}
+renderSettings();$("checkDate").value=today();$("reportEnd").value=today();$("reportStart").value=today();loadDraft();renderCheckForm();renderDashboard();renderProfiles();renderRecent();setupPetMonths();renderPets();report();
+const st=$("settingsSaveStatus"); if(st) st.textContent=`Cloud data loaded: ${Object.keys(state.entries.her||{}).length} Her logs and ${Object.keys(state.entries.him||{}).length} Him logs.`;
 
 
 // Backup and Excel-compatible CSV import/export.
@@ -376,7 +369,7 @@ function mergeCsvLogs(text){
   state.entries[p][d]=e;count++;
  }
  if(!count)throw new Error("No valid rows found. Use a NEW ME CSV exported with profile and date columns.");
- localStorage.setItem("newme_data",JSON.stringify(state));
+ window.persistNewMeState ? window.persistNewMeState(state) : localStorage.setItem("newme_data",JSON.stringify(state));
  renderSettings();$("checkDate").value=today();loadDraft();save();renderRecent();renderProfiles();report();
  $("backupStatus").textContent=`Imported ${count} check-ins. Matching profile/date entries were replaced; other dates were preserved.`;
 }
@@ -396,7 +389,7 @@ $("importBackupFile")?.addEventListener("change",async ev=>{
    state.awards=candidate.awards||{her:[],him:[]};
    state.milestones=Array.isArray(candidate.milestones)?candidate.milestones:[];
    state.punDone=candidate.punDone||{};
-   localStorage.setItem("newme_data",JSON.stringify(state));
+   window.persistNewMeState ? window.persistNewMeState(state) : localStorage.setItem("newme_data",JSON.stringify(state));
    renderSettings();$("checkDate").value=today();loadDraft();save();setupPetMonths();renderPets();report();
    $("backupStatus").textContent="Full backup restored successfully ✓";
   }else if(file.name.toLowerCase().endsWith(".csv")){
